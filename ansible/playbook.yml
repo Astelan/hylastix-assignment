@@ -1,0 +1,6 @@
+- name: Setup VM for Keycloak stack
+  hosts: web
+  become: true
+  roles:
+    - docker
+    - keycloak

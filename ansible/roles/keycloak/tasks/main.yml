@@ -1,0 +1,85 @@
+---
+- name: Ensure app directory exists
+  file:
+    path: /home/{{ ansible_user }}/app
+    state: directory
+    mode: '0755'
+
+- name: Ensure certs directory exists
+  file:
+    path: /home/{{ ansible_user }}/app/certs
+    state: directory
+    mode: '0755'
+
+- name: Remove existing SSL certificates if they exist
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /home/{{ ansible_user }}/app/certs/privkey.pem
+    - /home/{{ ansible_user }}/app/certs/fullchain.pem
+
+- name: Generate self-signed SSL certificate and private key for Nginx
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout /home/{{ ansible_user }}/app/certs/privkey.pem
+    -out /home/{{ ansible_user }}/app/certs/fullchain.pem
+    -subj "/CN=13.95.171.231"
+  args:
+    creates: /home/{{ ansible_user }}/app/certs/fullchain.pem
+
+- name: Set permissions for SSL certificate
+  file:
+    path: /home/{{ ansible_user }}/app/certs/fullchain.pem
+    mode: '0644'
+
+- name: Set permissions for SSL private key
+  file:
+    path: /home/{{ ansible_user }}/app/certs/privkey.pem
+    mode: '0600'
+
+- name: Copy Docker Compose file
+  copy:
+    src: docker-compose.yml
+    dest: /home/{{ ansible_user }}/app/docker-compose.yml
+    mode: '0644'
+
+- name: Copy Nginx configuration
+  copy:
+    src: nginx.conf
+    dest: /home/{{ ansible_user }}/app/nginx.conf
+    mode: '0644'
+
+- name: Create html directory
+  file:
+    path: /home/{{ ansible_user }}/app/html
+    state: directory
+    mode: '0755'
+
+- name: Copy static HTML page
+  copy:
+    src: index.html
+    dest: /home/{{ ansible_user }}/app/html/index.html
+    mode: '0644'
+
+- name: Stop and remove existing Docker Compose project
+  docker_compose:
+    project_src: /home/{{ ansible_user }}/app
+    state: absent
+  ignore_errors: yes
+
+- name: Check if ports 80, 443, and 8443 are free
+  shell: netstat -tuln | grep -E ':80|:443|:8443' || true
+  register: port_check
+  changed_when: false
+
+- name: Fail if ports are in use
+  fail:
+    msg: "Ports 80, 443, or 8443 are already in use. Check running processes or containers."
+  when: port_check.stdout != ""
+
+- name: Run Docker Compose
+  docker_compose:
+    project_src: /home/{{ ansible_user }}/app
+    state: present
+    build: no
