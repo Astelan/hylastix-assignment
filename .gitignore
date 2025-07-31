@@ -1,0 +1,52 @@
+# General
+*.log
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+*.idea/
+.vscode/
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/terraform.tfvars
+terraform/.terraform.lock.hcl
+
+# SSH keys and sensitive files
+*.pem
+*.key
+*.crt
+ansible/inventory.json
+ansible/inventory_dynamic.pyc
+ansible/*/inventory.json
+**/inventory.json
+**/id_rsa
+**/id_rsa.pub
+
+# Ansible facts and cache
+*.retry
+ansible/.ansible/
+ansible/roles/*/.molecule/
+ansible/roles/*/.tox/
+ansible/roles/*/.cache/
+
+# GitHub Actions artifacts
+.github/workflows/*.bak
+.github/workflows/*.tmp
+
+# Editor files
+*~
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
